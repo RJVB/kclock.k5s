@@ -76,14 +76,12 @@ int main(int argc, char *argv[])
 
     int ret;
     if (parser.isSet(setupOption)) {
-        KClockSetup *setup = new KClockSetup();
-        setup->show();
+        KClockSetup setup;
+        setup.show();
         ret = app.exec();
-        delete setup;
     } else {
-        KClockWidget *kclock = new KClockWidget(0, !parser.isSet(rootOption));
+        KClockWidget kclock(0, !parser.isSet(rootOption));
         ret = app.exec();
-        delete kclock;
     }
     return ret;
 }
