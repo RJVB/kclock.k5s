@@ -95,7 +95,6 @@ KClockSetup::KClockSetup(QWidget *parent) :
     _saver(0)
 {
     setWindowTitle(i18n("Setup Clock Screen Saver"));
-    setModal(true);
 
     readSettings();
 
