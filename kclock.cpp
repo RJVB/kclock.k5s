@@ -96,27 +96,16 @@ KClockSetup::KClockSetup(QWidget *parent) :
 {
     setWindowTitle(i18n("Setup Clock Screen Saver"));
     setModal(true);
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, this);
-    QPushButton *helpButton = buttonBox->addButton(QDialogButtonBox::Help);
-    if (helpButton) {
-        helpButton->setText(i18n("A&bout"));
-    }
-    connect(buttonBox, &QDialogButtonBox::accepted, this, &KClockSetup::slotOk);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    connect(buttonBox, &QDialogButtonBox::helpRequested, this, &KClockSetup::slotHelp);
 
     readSettings();
 
-    QWidget *main = new QWidget(this);
-//     setMainWidget(main);
-
-    QVBoxLayout *top = new QVBoxLayout(main);
+    QVBoxLayout *top = new QVBoxLayout(this);
 
     QHBoxLayout *hbox = new QHBoxLayout;
     top->addLayout(hbox);
 
 
-    QGroupBox *colgroup = new QGroupBox(i18n("Colors"), main);
+    QGroupBox *colgroup = new QGroupBox(i18n("Colors"), this);
     QGridLayout *grid = new QGridLayout();
 
     QLabel *label;
@@ -171,14 +160,13 @@ KClockSetup::KClockSetup(QWidget *parent) :
     colgroup->setLayout(grid);
 
 
-    QWidget *_preview = new QWidget(main);
+    QWidget *_preview = new QWidget(this);
     _preview->setFixedSize(220, 165);
     _preview->show();
-//     _saver = new KClockWidget(_preview->winId());
     _saver = new KClockWidget(_preview);
     hbox->addWidget(_preview);
 
-    label = new QLabel(i18n("Si&ze:"), main);
+    label = new QLabel(i18n("Si&ze:"), this);
     top->addWidget(label);
     QSlider *qs = new QSlider(Qt::Horizontal);
     label->setBuddy(qs);
@@ -189,24 +177,35 @@ KClockSetup::KClockSetup(QWidget *parent) :
     connect(qs, SIGNAL(valueChanged(int)), this, SLOT(slotSliderMoved(int)));
     top->addWidget(qs);
 
-    QHBoxLayout *qsscale = new QHBoxLayout(main);
+    QHBoxLayout *qsscale = new QHBoxLayout;
     qsscale->setContentsMargins(0, 0, 0, 0);
     qsscale->setSpacing(0);
-    label = new QLabel(i18n("Small"), main);
+    label = new QLabel(i18n("Small"), this);
     label->setAlignment(Qt::AlignLeading);
     qsscale->addWidget(label);
-    label = new QLabel(i18n("Medium"), main);
+    label = new QLabel(i18n("Medium"), this);
     label->setAlignment(Qt::AlignHCenter);
     qsscale->addWidget(label);
-    label = new QLabel(i18n("Big"), main);
+    label = new QLabel(i18n("Big"), this);
     label->setAlignment(Qt::AlignTrailing);
     qsscale->addWidget(label);
     top->addLayout(qsscale);
 
-    QCheckBox *keepCentered = new QCheckBox(i18n("&Keep clock centered"), main);
+    QCheckBox *keepCentered = new QCheckBox(i18n("&Keep clock centered"), this);
     keepCentered->setChecked(_keepCentered);
     connect(keepCentered, SIGNAL(stateChanged(int)), SLOT(slotKeepCenteredChanged(int)));
     top->addWidget(keepCentered);
+
+    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel, this);
+    QPushButton *helpButton = buttonBox->addButton(QDialogButtonBox::Help);
+    if (helpButton) {
+        helpButton->setText(i18n("A&bout"));
+    }
+    connect(buttonBox, &QDialogButtonBox::accepted, this, &KClockSetup::slotOk);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    connect(buttonBox, &QDialogButtonBox::helpRequested, this, &KClockSetup::slotHelp);
+    top->addWidget(buttonBox);
+
     top->addStretch();
 
 }
