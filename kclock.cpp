@@ -48,10 +48,35 @@ const int MAX_CLOCK_SIZE = 10;
 const unsigned int DEFAULT_CLOCK_SIZE = 8;
 const bool DEFAULT_KEEP_CENTERED = false;
 
+class KClockSaverInterface : public KScreenSaverInterface {
+public:
+    virtual KAboutData *aboutData() {
+        KAboutData *aboutData = new KAboutData( QStringLiteral("kclock.k5s"), i18n( "Clock Screen Saver" ),
+            QStringLiteral("5.0"), // version string
+            i18n( "An Analog Clock \"Screen Saver\"" ),
+            KAboutLicense::GPL,
+            i18n( "(c) Melchior FRANZ (c) 2003, 2006, 2007\n(c) 2017, René J.V. Bertin" ) );
+        aboutData->addAuthor( i18n( "Melchior FRANZ" ), i18n( "(Former) Maintainer and Developer" ), QStringLiteral("mfranz@kde.org") );
+        aboutData->addAuthor( i18n( "René J.V. Bertin" ), i18n( "Port to KF5" ), QStringLiteral("rjvbertin@gmail.com") );
+        aboutData->setTranslator( i18nc( "NAME OF TRANSLATORS", "Your names" ), i18nc( "EMAIL OF TRANSLATORS", "Your emails" ) );
+        return aboutData;
+    }
+
+    virtual KScreenSaver *create(QWidget *id) {
+        return new KClockWidget(id);
+    }
+
+    virtual QDialog *setup() {
+        return new KClockSetup();
+    }
+};
+
 
 
 int main(int argc, char *argv[])
 {
+#if 0
+    qunsetenv("SESSION_MANAGER");
     QApplication app(argc, argv);
 
     KAboutData aboutData( QStringLiteral("kclock.k5s"), i18n( "Clock Screen Saver" ),
@@ -86,6 +111,10 @@ int main(int argc, char *argv[])
         ret = app.exec();
     }
     return ret;
+#else
+    KClockSaverInterface k5s;
+    return kScreenSaverMain(argc, argv, k5s);
+#endif
 }
 
 
@@ -417,7 +446,7 @@ void ClockPainter::drawScale(const QColor &color)
 
 
 KClockWidget::KClockWidget(QWidget *id, bool windowed) :
-    QWidget(id),
+    KScreenSaver(id),
     _timer(this),
     _xstep(1),
     _ystep(-1),
@@ -425,6 +454,7 @@ KClockWidget::KClockWidget(QWidget *id, bool windowed) :
     _minute(-1),
     _second(-1)
 {
+    Q_UNUSED(windowed);
     setAttribute(Qt::WA_NoSystemBackground);
     setMinimumSize(50, 50);
     readSettings();

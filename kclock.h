@@ -26,6 +26,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 
+#include "kscreensaver.h"
 
 class KClockWidget;
 
@@ -76,7 +77,7 @@ public:
 
 
 
-class KClockWidget : public QWidget {
+class KClockWidget : public KScreenSaver {
     Q_OBJECT
 public:
 //     KClockWidget(WId id);

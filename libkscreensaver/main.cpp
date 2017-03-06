@@ -20,8 +20,6 @@
 #include "kscreensaver.h"
 #include "kscreensaver_vroot.h"
 
-#include <config-workspace.h>
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -32,17 +30,18 @@
 #include <QKeyEvent>
 #include <QSocketNotifier>
 
-#include <klocale.h>
-#include <kglobal.h>
-#include <kdebug.h>
-#include <kcmdlineargs.h>
-#include <kicon.h>
-#include <kapplication.h>
-#include <kcrash.h>
-#include <kaboutdata.h>
+#include <QWidget>
+#include <QWindow>
+#include <QApplication>
+#include <QCommandLineParser>
+#include <QIcon>
 
-#ifdef Q_WS_X11
-#include <QtGui/QX11Info>
+#include <KCrash>
+#include <KAboutData>
+#include <KLocalizedString>
+
+#ifdef HAVE_X11
+#include <QX11Info>
 #endif
 
 static void crashHandler( int  )
@@ -69,9 +68,10 @@ static void termHandler( int )
 class DemoWindow : public QWidget
 {
 public:
-    DemoWindow() : QWidget()
+    DemoWindow()
+        : QWidget()
     {
-	setFixedSize(600, 420);
+        setFixedSize(600, 420);
     }
 
 protected:
@@ -91,8 +91,7 @@ protected:
 
     virtual void keyPressEvent(QKeyEvent *e)
     {
-        if (e->text() == QLatin1String("q"))
-        {
+        if (e->text() == QLatin1String("q")) {
             qApp->quit();
         }
     }
@@ -105,19 +104,17 @@ protected:
 
 
 //----------------------------------------------------------------------------
-#if defined(Q_WS_QWS) || defined(Q_WS_MACX) || defined(Q_WS_WIN)
-typedef WId Window;
-#endif
 
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
 extern "C" {
 
 static int (*oldXErrorHandler)(Display *, XErrorEvent *);
 
 static int xErrorHandler(Display *dpy, XErrorEvent *err)
 {
-    if (getppid() == 1)
-        kFatal() << "Got X error after loss of parent process. Terminating.";
+    if (getppid() == 1) {
+        qFatal("Got X error after loss of parent process. Terminating.");
+    }
     return oldXErrorHandler(dpy, err);
 }
 
@@ -126,33 +123,32 @@ static int xErrorHandler(Display *dpy, XErrorEvent *err)
 
 int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverInterface )
 {
-    KLocale::setMainCatalog("libkscreensaver");
-    KCmdLineArgs::init(argc, argv, screenSaverInterface.aboutData());
+    // Disable session management so screensaver windows don't get restored on login (bug#314859)
+    qunsetenv("SESSION_MANAGER");
+#ifdef HAVE_X11
+    bool isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
+#endif
+    QApplication app(argc, argv);
+    KAboutData *aboutData = screenSaverInterface.aboutData();
+    if (aboutData) {
+        KAboutData::setApplicationData(*aboutData);
+    }
 
+    QCommandLineParser parser;
+    parser.setApplicationDescription(app.translate("main", "The KClock analog clock screensaver from KDE4's kdeartwork"));
+    const QCommandLineOption setupOption(QStringLiteral("setup"), i18n("Set up the screensaver"));
+    const QCommandLineOption rootOption(QStringLiteral("root"), i18n("Run in the root XWindow or fullscreen"));
+    const QCommandLineOption demoOption(QStringLiteral("demo"), i18n("Run in demo mode (default)"));
+    parser.addOptions({setupOption, rootOption, demoOption});
+    parser.addHelpOption();
+    parser.addVersionOption();
 
-    KCmdLineOptions options;
-
-    options.add("setup", ki18n("Setup screen saver"));
-
-    options.add("window-id wid", ki18n("Run in the specified XWindow"));
-
-    options.add("root", ki18n("Run in the root XWindow"));
-
-    options.add("demo", ki18n("Start screen saver in demo mode"), "default");
-
-    KCmdLineArgs::addCmdLineOptions(options);
-
-    KApplication app;
+    parser.process(app);
 
     // Set a useful default icon.
-    app.setWindowIcon(KIcon("preferences-desktop-screensaver"));
+    app.setWindowIcon(QIcon::fromTheme("preferences-desktop-screensaver", app.windowIcon()));
 
-    // Disable session management so screensaver windows don't get restored on login (bug#314859)
-    app.disableSessionManagement();
-
-
-    if (!pipe(termPipe))
-    {
+    if (!pipe(termPipe)) {
 #ifndef Q_WS_WIN
         struct sigaction sa;
         sa.sa_handler = termHandler;
@@ -164,52 +160,37 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
         QObject::connect(sn, SIGNAL(activated(int)), &app, SLOT(quit()));
     }
 
-#ifdef Q_WS_X11
-    oldXErrorHandler = XSetErrorHandler(xErrorHandler);
+#ifdef HAVE_X11
+    if (isXCB) {
+        oldXErrorHandler = XSetErrorHandler(xErrorHandler);
+    }
 #endif
-    KCrash::setCrashHandler( crashHandler );
-    KGlobal::locale()->insertCatalog("klock");
-    KGlobal::locale()->insertCatalog("kscreensaver");
+    KCrash::setCrashHandler(crashHandler);
 
     DemoWindow *demoWidget = 0;
-    Window saveWin = 0;
+    WId saveWin = 0;
     KScreenSaver *target;
 
-    KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
-
-    if (args->isSet("setup"))
-    {
+    if (parser.isSet("setup")) {
        QDialog *dlg = screenSaverInterface.setup();
-       args->clear();
        dlg->exec();
        delete dlg;
        return 0;
     }
 
-    if (args->isSet("window-id"))
-    {
-#ifdef Q_WS_WIN
-        saveWin = (HWND)(args->getOption("window-id").toULong());
-#else
-        saveWin = args->getOption("window-id").toInt();
-#endif
-    }
-
-#ifdef Q_WS_X11 //FIXME
-    if (args->isSet("root"))
-    {
-		QX11Info inf;
-        saveWin = RootWindow(QX11Info::display(), inf.screen());
+#ifdef HAVE_X11 //FIXME
+    if (parser.isSet("root")) {
+        if (isXCB) {
+            saveWin = RootWindow(QX11Info::display(), QX11Info::appScreen());
+        }
     }
 #endif
 
-    if (args->isSet("demo"))
-    {
+    if (parser.isSet("demo")) {
         saveWin = 0;
     }
 
-    if (saveWin == 0)
-    {
+    if (saveWin == 0) {
         demoWidget = new DemoWindow();
         demoWidget->setAttribute(Qt::WA_NoSystemBackground);
         demoWidget->setAttribute(Qt::WA_PaintOnScreen);
@@ -218,16 +199,15 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
         saveWin = demoWidget->winId();
     }
 
-    target = screenSaverInterface.create( saveWin );
+    QWindow *saveWindow = QWindow::fromWinId(saveWin);
+    target = screenSaverInterface.create(QWidget::createWindowContainer(saveWindow));
     target->setAttribute(Qt::WA_PaintOnScreen);
     target->show();
 
-    if (demoWidget)
-    {
-        target->installEventFilter( demoWidget );
+    if (demoWidget) {
+        target->installEventFilter(demoWidget);
     }
 
-    args->clear();
     app.exec();
 
     delete target;

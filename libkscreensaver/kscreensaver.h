@@ -44,9 +44,6 @@ class Q_DECL_EXPORT KScreenSaver : public QWidget
 {
     Q_OBJECT
 public:
-    /**
-     * @param id The winId() of the widget to draw the screensaver into.
-     */
     KScreenSaver( QWidget *id );
     ~KScreenSaver();
 
@@ -68,6 +65,7 @@ private:
     //      See http://techbase.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B
     //KScreenSaverPrivate *d;
     QWidget *embeddedWidget;
+    bool isXCB;
 };
 
 /**
@@ -96,11 +94,11 @@ public:
     /**
      * Reimplement this method to return the KAboutData instance describing your screensaver
      */
-    virtual KAboutData *aboutData() = 0;
+    virtual KAboutData *aboutData();
     /**
      * Reimplement this method to return your KScreenSaver-derived screensaver
      */
-    virtual KScreenSaver* create( WId id ) = 0;
+    virtual KScreenSaver* create(QWidget *id) = 0;
     /**
      * Reimplement this method to return your modal setup dialog
      */
@@ -113,55 +111,5 @@ public:
  */
 Q_DECL_EXPORT int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverInterface );
 
-/**
-*
-* Blanks a widget using various effects.
-*
-* @short Blanks a widget using various effects.
-* @author Martin R. Jones <mjones@kde.org>
-*/
-class KBlankEffect : public QObject
-{
-    Q_OBJECT
-public:
-    KBlankEffect( QObject *parent=0 );
-    ~KBlankEffect();
-
-    enum Effect { Random=-1, Blank=0, SweepRight, SweepDown, Blocks,
-                  MaximumEffects };
-
-    /**
-     * Blank a widget using the specified effect.
-     * Some blanking effects take some time, so you should connect to
-     * doneBlank() to know when the blanking is complete.
-     *
-     * @param w The widget to blank.
-     * @param effect The type of effect to use.
-     */
-    void blank( QWidget *w, Effect effect=Random );
-
-    typedef void (KBlankEffect::*BlankEffect)();
-
-Q_SIGNALS:
-    /**
-     * emitted when a blanking effect has completed.
-     */
-    void doneBlank();
-
-protected Q_SLOTS:
-    void timeout();
-
-protected:
-    void finished();
-
-    void blankNormal();
-    void blankSweepRight();
-    void blankSweepDown();
-    void blankBlocks();
-
-protected:
-    static BlankEffect effects[];
-    KBlankEffectPrivate *d;
-};
 #endif
 
