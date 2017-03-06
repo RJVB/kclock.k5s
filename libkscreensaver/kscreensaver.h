@@ -23,6 +23,8 @@
 #define KSCREENSAVER_H
 
 #include <QWidget>
+#include <QString>
+#include <QKeyEvent>
 
 #include <kaboutdata.h> // needed by all users of this header, so no point in a forward declaration
 
@@ -44,20 +46,15 @@ class Q_DECL_EXPORT KScreenSaver : public QWidget
 {
     Q_OBJECT
 public:
-    KScreenSaver( QWidget *id );
+    KScreenSaver(QWidget *id);
+    KScreenSaver(WId id);
     ~KScreenSaver();
 
 protected:
-    /**
-     * You cannot create a new widget with this widget as parent, since this
-     * widget may not be owned by your application.  In order to create
-     * widgets with a KScreenSaver as parent, create the widget with no parent,
-     * call embed(), and then show() the widget.
-     *
-     * @param widget The widget to embed in the screensaver widget.
-     */
-    void embed( QWidget *widget );
     bool event( QEvent* event );
+    virtual bool eventFilter(QObject *, QEvent *e);
+    virtual void keyPressEvent(QKeyEvent *e);
+    virtual void closeEvent(QCloseEvent *);
 
 private:
     //Note: To keep binary compatibility this class must have only one member, which is a pointer.
@@ -99,6 +96,7 @@ public:
      * Reimplement this method to return your KScreenSaver-derived screensaver
      */
     virtual KScreenSaver* create(QWidget *id) = 0;
+    virtual KScreenSaver* create(WId id);
     /**
      * Reimplement this method to return your modal setup dialog
      */

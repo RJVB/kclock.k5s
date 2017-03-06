@@ -82,6 +82,7 @@ class KClockWidget : public KScreenSaver {
 public:
 //     KClockWidget(WId id);
     KClockWidget(QWidget *id, bool windowed=true);
+    KClockWidget(WId id, bool windowed=true);
     inline void setBgndColor(const QColor &c) { _second = -1; setPalette(QPalette(_bgndColor = c)); }
     inline void setScaleColor(const QColor &c) { _second = -1; _scaleColor = c; }
     inline void setHourColor(const QColor &c) { _second = -1; _hourColor = c; }

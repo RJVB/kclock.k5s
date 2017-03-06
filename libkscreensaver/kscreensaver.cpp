@@ -22,21 +22,34 @@
 
 #include <QPainter>
 #include <QTimer>
+#include <QEvent>
+#include <QKeyEvent>
+#include <QWindow>
 #include <QApplication>
+
 #include <QDebug>
-#include <krandom.h>
 
 #ifdef HAVE_X11
     #include <QX11Info>
-    #include <X11/Xlib.h>
 #endif
 
 //-----------------------------------------------------------------------------
 
-KScreenSaver::KScreenSaver( QWidget *id )
+KScreenSaver::KScreenSaver(QWidget *id)
     : QWidget(id)
     , embeddedWidget(0)
 {
+    isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
+}
+
+KScreenSaver::KScreenSaver(WId id)
+    : QWidget()
+    , embeddedWidget(0)
+{
+    if (id) {
+        create(id, false, true);
+//         QWidget::createWindowContainer(QWindow::fromWinId(id))
+    }
     isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
 }
 
@@ -57,18 +70,30 @@ bool KScreenSaver::event(QEvent* e)
     return r;
 }
 
-void KScreenSaver::embed(QWidget *w)
+bool KScreenSaver::eventFilter( QObject *, QEvent *e )
 {
-    w->resize( size() );
-    QApplication::sendPostedEvents();
-#if defined(HAVE_X11) //FIXME
-    if (isXCB) {
-        XReparentWindow(QX11Info::display(), w->winId(), winId(), 0, 0);
+    if (e->type() == QEvent::KeyPress) {
+        keyPressEvent( (QKeyEvent *)e );
+        return true;
+    } else if( e->type() == QEvent::Close ) {
+        // In demo mode, screensaver's QWidget does create()
+        // with winId of the DemoWidget, which results in two QWidget's
+        // sharing the same winId and Qt delivering events only to one of them.
+        qApp->quit();
     }
-#endif
-    w->setGeometry( 0, 0, width(), height() );
-    embeddedWidget = w;
-    QApplication::sendPostedEvents();
+    return false;
+}
+
+void KScreenSaver::keyPressEvent(QKeyEvent *e)
+{
+    if (e->text() == QLatin1String("q")) {
+        qApp->quit();
+    }
+}
+
+void KScreenSaver::closeEvent(QCloseEvent *)
+{
+    qApp->quit();
 }
 
 KScreenSaverInterface::~KScreenSaverInterface()
@@ -78,6 +103,12 @@ KScreenSaverInterface::~KScreenSaverInterface()
 KAboutData *KScreenSaverInterface::aboutData()
 {
     return 0;
+}
+
+KScreenSaver *KScreenSaverInterface::create(WId id)
+{
+    QWindow *saveWindow = QWindow::fromWinId(id);
+    return create(QWidget::createWindowContainer(saveWindow));
 }
 
 QDialog* KScreenSaverInterface::setup()

@@ -50,7 +50,8 @@ const bool DEFAULT_KEEP_CENTERED = false;
 
 class KClockSaverInterface : public KScreenSaverInterface {
 public:
-    virtual KAboutData *aboutData() {
+    virtual KAboutData *aboutData()
+    {
         KAboutData *aboutData = new KAboutData( QStringLiteral("kclock.k5s"), i18n( "Clock Screen Saver" ),
             QStringLiteral("5.0"), // version string
             i18n( "An Analog Clock \"Screen Saver\"" ),
@@ -62,11 +63,18 @@ public:
         return aboutData;
     }
 
-    virtual KScreenSaver *create(QWidget *id) {
+    virtual KScreenSaver *create(QWidget *id) 
+    {
         return new KClockWidget(id);
     }
 
-    virtual QDialog *setup() {
+    virtual KScreenSaver *create(WId id)
+    {
+        return new KClockWidget(id);
+    }
+
+    virtual QDialog *setup()
+    {
         return new KClockSetup();
     }
 };
@@ -189,12 +197,10 @@ KClockSetup::KClockSetup(QWidget *parent) :
     hbox->addWidget(colgroup);
     colgroup->setLayout(grid);
 
-
-    QWidget *_preview = new QWidget(this);
-    _preview->setFixedSize(220, 165);
-    _preview->show();
-    _saver = new KClockWidget(_preview);
-    hbox->addWidget(_preview);
+    _saver = new KClockWidget(this);
+    _saver->setFixedSize(220, 165);
+    _saver->show();
+    hbox->addWidget(_saver);
 
     label = new QLabel(i18n("Si&ze:"), this);
     top->addWidget(label);
@@ -445,8 +451,31 @@ void ClockPainter::drawScale(const QColor &color)
 
 
 
-KClockWidget::KClockWidget(QWidget *id, bool windowed) :
-    KScreenSaver(id),
+KClockWidget::KClockWidget(QWidget *id, bool windowed)
+    : KScreenSaver(id),
+    _timer(this),
+    _xstep(1),
+    _ystep(-1),
+    _hour(-1),
+    _minute(-1),
+    _second(-1)
+{
+    Q_UNUSED(windowed);
+    setAttribute(Qt::WA_NoSystemBackground);
+    setMinimumSize(50, 50);
+    readSettings();
+    resizeClock(_size);
+
+    QPalette p = palette();
+    p.setColor(backgroundRole(), _bgndColor);
+    setPalette(p);
+
+    connect(&_timer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
+    show();
+}
+
+KClockWidget::KClockWidget(WId id, bool windowed)
+    : KScreenSaver(id),
     _timer(this),
     _xstep(1),
     _ystep(-1),

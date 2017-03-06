@@ -75,32 +75,6 @@ public:
     {
     }
 
-protected:
-    virtual bool eventFilter( QObject *, QEvent *e )
-    {
-        if (e->type() == QEvent::KeyPress) {
-            keyPressEvent( (QKeyEvent *)e );
-            return true;
-        } else if( e->type() == QEvent::Close ) {
-            // In demo mode, screensaver's QWidget does create()
-            // with winId of the DemoWidget, which results in two QWidget's
-            // sharing the same winId and Qt delivering events only to one of them.
-            qApp->quit();
-        }
-        return false;
-    }
-
-    virtual void keyPressEvent(QKeyEvent *e)
-    {
-        if (e->text() == QLatin1String("q")) {
-            qApp->quit();
-        }
-    }
-
-    virtual void closeEvent( QCloseEvent * )
-    {
-        qApp->quit();
-    }
 };
 
 
@@ -194,11 +168,14 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
     }
 
     if (saveWin == 0) {
-        demoWidget = new DemoWindow();
-        demoWidget->setAttribute(Qt::WA_NoSystemBackground);
-        demoWidget->show();
-        app.processEvents();
-        target = screenSaverInterface.create(demoWidget);
+//         demoWidget = new DemoWindow();
+//         demoWidget->setAttribute(Qt::WA_NoSystemBackground);
+//         demoWidget->show();
+//         app.processEvents();
+        target = screenSaverInterface.create(Q_NULLPTR);
+//         if (isXCB) {
+//             target->embed(demoWidget);
+//         }
     } else {
         QWindow *saveWindow = QWindow::fromWinId(saveWin);
         target = screenSaverInterface.create(QWidget::createWindowContainer(saveWindow));
