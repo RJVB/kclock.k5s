@@ -36,6 +36,8 @@
 #include <QCommandLineParser>
 #include <QIcon>
 
+#include <QDebug>
+
 #include <KCrash>
 #include <KAboutData>
 #include <KLocalizedString>
@@ -68,10 +70,9 @@ static void termHandler( int )
 class DemoWindow : public QWidget
 {
 public:
-    DemoWindow()
-        : QWidget()
+    DemoWindow(QWidget *parent=0)
+        : QWidget(parent)
     {
-        setFixedSize(600, 420);
     }
 
 protected:
@@ -125,14 +126,16 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
 {
     // Disable session management so screensaver windows don't get restored on login (bug#314859)
     qunsetenv("SESSION_MANAGER");
-#ifdef HAVE_X11
-    bool isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
-#endif
     QApplication app(argc, argv);
     KAboutData *aboutData = screenSaverInterface.aboutData();
     if (aboutData) {
         KAboutData::setApplicationData(*aboutData);
     }
+
+#ifdef HAVE_X11
+    bool isXCB = QApplication::platformName().contains(QLatin1String("xcb"));
+    qWarning() << Q_FUNC_INFO << "running on" << QGuiApplication::platformName() << isXCB;
+#endif
 
     QCommandLineParser parser;
     parser.setApplicationDescription(app.translate("main", "The KClock analog clock screensaver from KDE4's kdeartwork"));
@@ -193,15 +196,13 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
     if (saveWin == 0) {
         demoWidget = new DemoWindow();
         demoWidget->setAttribute(Qt::WA_NoSystemBackground);
-        demoWidget->setAttribute(Qt::WA_PaintOnScreen);
         demoWidget->show();
         app.processEvents();
-        saveWin = demoWidget->winId();
+        target = screenSaverInterface.create(demoWidget);
+    } else {
+        QWindow *saveWindow = QWindow::fromWinId(saveWin);
+        target = screenSaverInterface.create(QWidget::createWindowContainer(saveWindow));
     }
-
-    QWindow *saveWindow = QWindow::fromWinId(saveWin);
-    target = screenSaverInterface.create(QWidget::createWindowContainer(saveWindow));
-    target->setAttribute(Qt::WA_PaintOnScreen);
     target->show();
 
     if (demoWidget) {
