@@ -22,9 +22,8 @@
 #ifndef KSCREENSAVER_H
 #define KSCREENSAVER_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 
-#include <kscreensaver_export.h>
 #include <kaboutdata.h> // needed by all users of this header, so no point in a forward declaration
 
 class KScreenSaverPrivate;
@@ -41,14 +40,14 @@ class KBlankEffectPrivate;
  * @short Provides a QWidget for a screensaver to draw into.
  * @author Martin R. Jones <mjones@kde.org>
  */
-class KSCREENSAVER_EXPORT KScreenSaver : public QWidget
+class Q_DECL_EXPORT KScreenSaver : public QWidget
 {
     Q_OBJECT
 public:
     /**
      * @param id The winId() of the widget to draw the screensaver into.
      */
-    KScreenSaver( WId id=0 );
+    KScreenSaver( QWidget *id );
     ~KScreenSaver();
 
 protected:
@@ -87,7 +86,7 @@ private:
  * to KDE-4, you can use the following python script
  * kdebase/workspace/kscreensaver/libkscreensaver/kscreensaver-kde3to4-porting.py
  */
-class KSCREENSAVER_EXPORT KScreenSaverInterface
+class Q_DECL_EXPORT KScreenSaverInterface
 {
 public:
     /**
@@ -112,7 +111,7 @@ public:
  * The entry point for the program's main()
  * @see KScreenSaverInterface
  */
-KSCREENSAVER_EXPORT int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverInterface );
+Q_DECL_EXPORT int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverInterface );
 
 /**
 *

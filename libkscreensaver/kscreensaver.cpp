@@ -22,27 +22,19 @@
 
 #include <QPainter>
 #include <QTimer>
-#include <QtGui/QX11Info>
 #include <QApplication>
 #include <QDebug>
 #include <krandom.h>
 
-#ifdef Q_WS_X11
-#include <X11/Xlib.h>
-#endif
-
-#ifdef Q_WS_WIN
-#include <windows.h>
+#ifdef HAVE_X11
+    #include <QX11Info>
+    #include <X11/Xlib.h>
 #endif
 
 //-----------------------------------------------------------------------------
 
-KScreenSaver::KScreenSaver( WId id ) : QWidget(), embeddedWidget(0)
+KScreenSaver::KScreenSaver( QWidget *id ) : QWidget(id), embeddedWidget(0)
 {
-    if ( id )
-    {
-        create( id, false, true );
-    }
 }
 
 KScreenSaver::~KScreenSaver()
@@ -69,11 +61,11 @@ void KScreenSaver::embed( QWidget *w )
 {
     w->resize( size() );
     QApplication::sendPostedEvents();
-#if defined(Q_WS_X11) //FIXME
+#if defined(HAVE_X11) //FIXME
     XReparentWindow(QX11Info::display(), w->winId(), winId(), 0, 0);
 #elif defined(Q_WS_WIN)
     SetParent(w->winId(), winId());
-    
+
     LONG style = GetWindowLong(w->winId(), GWL_STYLE);
     style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
     SetWindowLong(w->winId(), GWL_STYLE, style);
@@ -228,4 +220,4 @@ void KBlankEffect::blankBlocks()
     }
 }
 
-#include "kscreensaver.moc"
+// #include "kscreensaver.moc"

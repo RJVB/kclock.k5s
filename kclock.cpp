@@ -29,6 +29,8 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QWidget>
+#include <QWindow>
 
 #include <KAboutData>
 #include <KColorButton>

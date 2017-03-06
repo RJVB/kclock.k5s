@@ -32,10 +32,16 @@ if (NOT APPLE)
     find_package(X11)
     if (X11_FOUND)
         find_package(XCB COMPONENTS XCB)
+        find_package(Qt5 ${QT_MIN_VERSION} CONFIG COMPONENTS X11Extras)
+        if (Qt5X11Extras_FOUND)
+            add_definitions(-DHAVE_X11)
+        endif()
     endif()
 endif()
 
-set(kclock.k5s_SRCS kclock.cpp )
+include_directories(libkscreensaver)
+
+set(kclock.k5s_SRCS kclock.cpp libkscreensaver/kscreensaver.cpp)
 
 add_executable(kclock.k5s ${kclock.k5s_SRCS})
 
@@ -43,7 +49,10 @@ target_link_libraries(kclock.k5s
     Qt5::Core Qt5::Gui Qt5::Widgets
     KF5::ConfigWidgets KF5::I18n KF5::WidgetsAddons)
 if (X11_FOUND)
-    target_link_libraries(kclock.k5s ${XCB_LIBRARIES})
+    if (Qt5X11Extras_FOUND)
+        target_link_libraries(kclock.k5s Qt5::X11Extras)
+    endif()
+    target_link_libraries(kclock.k5s ${XCB_LIBRARIES} ${X11_LIBRARIES})
 endif()
 
 install(TARGETS kclock.k5s ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

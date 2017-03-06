@@ -30,7 +30,7 @@
 class KClockWidget;
 
 
-class KClockSetup : public QDialog {
+class Q_DECL_EXPORT KClockSetup : public QDialog {
     Q_OBJECT
 public:
     KClockSetup(QWidget *parent = 0);

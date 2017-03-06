@@ -20,16 +20,13 @@
 #ifndef KSCREENSAVER_EXPORT_H
 #define KSCREENSAVER_EXPORT_H
 
-/* needed for KDE_EXPORT and KDE_IMPORT macros */
-#include <kdemacros.h>
-
 #ifndef KSCREENSAVER_EXPORT
 # if defined(MAKE_KSCREENSAVER_LIB)
    /* We are building this library */ 
-#  define KSCREENSAVER_EXPORT KDE_EXPORT
+#  define KSCREENSAVER_EXPORT Q_DECL_EXPORT
 # else
    /* We are using this library */ 
-#  define KSCREENSAVER_EXPORT KDE_IMPORT
+#  define KSCREENSAVER_EXPORT Q_DECL_IMPORT
 # endif
 #endif
 
