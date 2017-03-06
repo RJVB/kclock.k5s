@@ -100,6 +100,7 @@ private slots:
 
 private:
     void readSettings();
+    void init();
 
     QTimer _timer;
     QColor _bgndColor;

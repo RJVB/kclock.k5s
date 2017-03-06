@@ -461,17 +461,7 @@ KClockWidget::KClockWidget(QWidget *id, bool windowed)
     _second(-1)
 {
     Q_UNUSED(windowed);
-    setAttribute(Qt::WA_NoSystemBackground);
-    setMinimumSize(50, 50);
-    readSettings();
-    resizeClock(_size);
-
-    QPalette p = palette();
-    p.setColor(backgroundRole(), _bgndColor);
-    setPalette(p);
-
-    connect(&_timer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
-    show();
+    init();
 }
 
 KClockWidget::KClockWidget(WId id, bool windowed)
@@ -484,6 +474,11 @@ KClockWidget::KClockWidget(WId id, bool windowed)
     _second(-1)
 {
     Q_UNUSED(windowed);
+    init();
+}
+
+void KClockWidget::init()
+{
     setAttribute(Qt::WA_NoSystemBackground);
     setMinimumSize(50, 50);
     readSettings();
