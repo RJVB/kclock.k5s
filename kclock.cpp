@@ -32,6 +32,8 @@
 #include <QWidget>
 #include <QWindow>
 
+#include <QDebug>
+
 #include <KAboutData>
 #include <KColorButton>
 #include <KConfigGroup>
@@ -461,6 +463,9 @@ KClockWidget::KClockWidget(QWidget *id, bool windowed)
     _second(-1)
 {
     Q_UNUSED(windowed);
+    if (id) {
+        qWarning() << Q_FUNC_INFO << "using widget" << id;
+    }
     init();
 }
 
@@ -479,17 +484,20 @@ KClockWidget::KClockWidget(WId id, bool windowed)
 
 void KClockWidget::init()
 {
-    setAttribute(Qt::WA_NoSystemBackground);
-    setMinimumSize(50, 50);
+    self->setAttribute(Qt::WA_NoSystemBackground);
+    self->setMinimumSize(50, 50);
     readSettings();
     resizeClock(_size);
 
-    QPalette p = palette();
-    p.setColor(backgroundRole(), _bgndColor);
-    setPalette(p);
+    QPalette p = self->palette();
+    p.setColor(self->backgroundRole(), _bgndColor);
+    self->setPalette(p);
 
     connect(&_timer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
     show();
+    if (self != this) {
+        self->show();
+    }
 }
 
 
@@ -499,8 +507,9 @@ void KClockWidget::readSettings()
     KConfigGroup settings(config, "Settings");
     _keepCentered = settings.readEntry("KeepCentered", DEFAULT_KEEP_CENTERED);
     _size = settings.readEntry("Size", DEFAULT_CLOCK_SIZE);
-    if (_size > MAX_CLOCK_SIZE)
+    if (_size > MAX_CLOCK_SIZE) {
         _size = MAX_CLOCK_SIZE;
+    }
 
     KConfigGroup colors(config, "Colors");
     QColor c = Qt::black;
@@ -524,6 +533,9 @@ void KClockWidget::setKeepCentered(bool b)
         _y = (height() - _diameter) / 2;
     }
     update();
+    if (self != this) {
+        self->update();
+    }
 }
 
 
@@ -534,6 +546,9 @@ void KClockWidget::resizeClock(int size)
     _x = (width() - _diameter) / 2;
     _y = (height() - _diameter) / 2;
     update();
+    if (self != this) {
+        self->update();
+    }
 }
 
 
@@ -586,6 +601,9 @@ void KClockWidget::slotTimeout()
         }
     }
     update();
+    if (self != this) {
+        self->update();
+    }
 }
 
 
@@ -612,7 +630,7 @@ void KClockWidget::paintEvent(QPaintEvent *)
         c.drawHand(second_angle, 900.0, 30.0, _secColor);
     }
 
-    QPainter p(this);
+    QPainter p(self);
     p.drawImage(_x, _y, clock);
     p.eraseRect(0, 0, _x, height());                                        // left ver
     p.eraseRect(_x + _diameter, 0, width(), height());                      // right ver

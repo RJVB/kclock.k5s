@@ -32,6 +32,7 @@
 
 #include <QWidget>
 #include <QWindow>
+#include <QDesktopWidget>
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QIcon>
@@ -67,18 +68,6 @@ static void termHandler( int )
 
 //----------------------------------------------------------------------------
 
-class DemoWindow : public QWidget
-{
-public:
-    DemoWindow(QWidget *parent=0)
-        : QWidget(parent)
-    {
-    }
-
-};
-
-
-//----------------------------------------------------------------------------
 
 #ifdef HAVE_X11
 extern "C" {
@@ -144,9 +133,9 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
 #endif
     KCrash::setCrashHandler(crashHandler);
 
-    DemoWindow *demoWidget = 0;
     WId saveWin = 0;
     KScreenSaver *target;
+    QWidget *rootWidget = 0;
 
     if (parser.isSet("setup")) {
        QDialog *dlg = screenSaverInterface.setup();
@@ -155,41 +144,33 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
        return 0;
     }
 
-#ifdef HAVE_X11 //FIXME
     if (parser.isSet("root")) {
+#ifdef HAVE_X11
         if (isXCB) {
             saveWin = RootWindow(QX11Info::display(), QX11Info::appScreen());
+            rootWidget = QApplication::desktop()->screen(QX11Info::appScreen());
+            qWarning() << Q_FUNC_INFO << "RootWindow" << saveWin << "rootWidget=" << rootWidget
+                << "for screen" << QX11Info::appScreen() << "of display" << QX11Info::display();
         }
-    }
+        else
 #endif
+            rootWidget = QApplication::desktop()->screen();
+    }
 
     if (parser.isSet("demo")) {
         saveWin = 0;
     }
 
     if (saveWin == 0) {
-//         demoWidget = new DemoWindow();
-//         demoWidget->setAttribute(Qt::WA_NoSystemBackground);
-//         demoWidget->show();
-//         app.processEvents();
-        target = screenSaverInterface.create(Q_NULLPTR);
-//         if (isXCB) {
-//             target->embed(demoWidget);
-//         }
+        target = screenSaverInterface.create(rootWidget);
     } else {
-        QWindow *saveWindow = QWindow::fromWinId(saveWin);
-        target = screenSaverInterface.create(QWidget::createWindowContainer(saveWindow));
+        target = screenSaverInterface.create(saveWin);
     }
     target->show();
-
-    if (demoWidget) {
-        target->installEventFilter(demoWidget);
-    }
 
     app.exec();
 
     delete target;
-    delete demoWidget;
 
     return 0;
 }

@@ -25,6 +25,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QWindow>
+#include <QDesktopWidget>
 #include <QApplication>
 
 #include <QDebug>
@@ -37,18 +38,18 @@
 
 KScreenSaver::KScreenSaver(QWidget *id)
     : QWidget(id)
-    , embeddedWidget(0)
+    , self(this)
 {
     isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
 }
 
 KScreenSaver::KScreenSaver(WId id)
-    : QWidget()
-    , embeddedWidget(0)
+    : QWidget(QWidget::find(id))
 {
     if (id) {
-        create(id, false, true);
-//         QWidget::createWindowContainer(QWindow::fromWinId(id))
+//         self = QWidget::createWindowContainer(QWindow::fromWinId(id), 0, Qt::Desktop);
+        self = QWidget::find(id);
+        qWarning() << Q_FUNC_INFO << "K5S widget this=" << this << "uses self=" << self << "for WId" << id;
     }
     isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
 }
@@ -62,10 +63,10 @@ bool KScreenSaver::event(QEvent* e)
 {
     bool r = QWidget::event(e);
     if (e->type() == QEvent::Polish) {
-        setAttribute(Qt::WA_StyledBackground, false);
+        self->setAttribute(Qt::WA_StyledBackground, false);
     }
-    if ((e->type() == QEvent::Resize) && embeddedWidget) {
-        embeddedWidget->resize( size() );
+    if ((e->type() == QEvent::Resize) && self && self != this) {
+        self->resize( size() );
     }
     return r;
 }
