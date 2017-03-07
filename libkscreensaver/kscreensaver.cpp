@@ -34,24 +34,34 @@
     #include <QX11Info>
 #endif
 
+#include <KWindowSystem>
+
 //-----------------------------------------------------------------------------
 
 KScreenSaver::KScreenSaver(QWidget *id)
     : QWidget(id)
     , self(this)
 {
-    isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
+    isXCB = KWindowSystem::isPlatformX11();
 }
 
 KScreenSaver::KScreenSaver(WId id)
     : QWidget(QWidget::find(id))
 {
+    isXCB = KWindowSystem::isPlatformX11();
     if (id) {
-//         self = QWidget::createWindowContainer(QWindow::fromWinId(id), 0, Qt::Desktop);
-        self = QWidget::find(id);
-        qWarning() << Q_FUNC_INFO << "K5S widget this=" << this << "uses self=" << self << "for WId" << id;
+        self = parentWidget();
+        if (!self) {
+#ifdef HAVE_X11
+            if (isXCB) {
+                self = QApplication::desktop()->screen(QX11Info::appScreen());
+            } else
+#endif
+                self = QWidget::createWindowContainer(QWindow::fromWinId(id), 0, Qt::Desktop);
+        }
+        qWarning() << Q_FUNC_INFO << "K5S widget this=" << this << "uses self=" << self << "for WId" << id
+            << "( -> WId=" << self->winId() << ")";
     }
-    isXCB = QGuiApplication::platformName().contains(QLatin1String("xcb"));
 }
 
 KScreenSaver::~KScreenSaver()

@@ -42,6 +42,7 @@
 #include <KCrash>
 #include <KAboutData>
 #include <KLocalizedString>
+#include <KWindowSystem>
 
 #ifdef HAVE_X11
 #include <QX11Info>
@@ -96,8 +97,11 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
     }
 
 #ifdef HAVE_X11
-    bool isXCB = QApplication::platformName().contains(QLatin1String("xcb"));
+    bool isXCB = KWindowSystem::isPlatformX11();
     qWarning() << Q_FUNC_INFO << "running on" << QGuiApplication::platformName() << isXCB;
+    if (isXCB) {
+        qWarning() << "\tnextStartupId=" << QX11Info::nextStartupId();
+    }
 #endif
 
     QCommandLineParser parser;
@@ -151,6 +155,8 @@ int kScreenSaverMain( int argc, char** argv, KScreenSaverInterface& screenSaverI
             rootWidget = QApplication::desktop()->screen(QX11Info::appScreen());
             qWarning() << Q_FUNC_INFO << "RootWindow" << saveWin << "rootWidget=" << rootWidget
                 << "for screen" << QX11Info::appScreen() << "of display" << QX11Info::display();
+            // is this of any help?
+            QX11Info::setNextStartupId(QByteArray::number(saveWin));
         }
         else
 #endif

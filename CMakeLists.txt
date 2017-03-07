@@ -56,7 +56,7 @@ add_executable(kclock.k5s ${kclock.k5s_SRCS})
 
 target_link_libraries(kclock.k5s
     Qt5::Core Qt5::Gui Qt5::Widgets
-    KF5::ConfigWidgets KF5::Crash KF5::I18n KF5::WidgetsAddons KF5::WindowSystem)
+    KF5::ConfigWidgets KF5::ConfigGui KF5::Crash KF5::I18n KF5::WidgetsAddons KF5::WindowSystem)
 if (X11_FOUND)
     if (Qt5X11Extras_FOUND)
         target_link_libraries(kclock.k5s Qt5::X11Extras)
