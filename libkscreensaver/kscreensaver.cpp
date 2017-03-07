@@ -52,12 +52,7 @@ KScreenSaver::KScreenSaver(WId id)
     if (id) {
         self = parentWidget();
         if (!self) {
-#ifdef HAVE_X11
-            if (isXCB) {
-                self = QApplication::desktop()->screen(QX11Info::appScreen());
-            } else
-#endif
-                self = QWidget::createWindowContainer(QWindow::fromWinId(id), 0, Qt::Desktop);
+            self = QWidget::createWindowContainer(QWindow::fromWinId(id));
         }
         qWarning() << Q_FUNC_INFO << "K5S widget this=" << this << "uses self=" << self << "for WId" << id
             << "( -> WId=" << self->winId() << ")";
